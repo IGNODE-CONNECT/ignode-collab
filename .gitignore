@@ -1,0 +1,25 @@
+# Notebook runtime outputs
+.ipynb_checkpoints/
+*.onnx
+*.tar
+*.tflite
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Environment / secrets (defensive — should never appear in a public repo)
+.env
+*.pem
+*.key
