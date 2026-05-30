@@ -1,0 +1,42 @@
+name: Lint notebooks (manual)
+
+# ─── Trigger ──────────────────────────────────────────────────────────────
+# Manual-only. Click "Run workflow" in the Actions tab when you want this.
+# We don't auto-run on push because:
+#   - Notebooks are quarterly-touch artifacts; on-push lint is overkill
+#   - The real "does it work" check is end-to-end execution in Colab,
+#     which this workflow can't verify anyway
+#   - Failing emails from minor false positives wastes attention
+on:
+  workflow_dispatch:
+
+jobs:
+  nbqa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install linting tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install nbqa flake8
+
+      # flake8 with Colab-friendly ignores:
+      #   F821 — Undefined name. Colab provides display(), files, etc. as
+      #          built-ins; flake8 can't see those.
+      #   E402 — Module-level import not at top of file. Notebooks legitimately
+      #          import inside cells.
+      #   E501 — Line too long. Notebook lines often run wider than scripts.
+      #   W503 — Line break before binary operator. PEP 8 reversed itself on
+      #          this; new style says break before, but flake8 still flags.
+      #   E303 — Too many blank lines. Notebook cells have natural padding.
+      - name: Run flake8 on notebooks
+        run: |
+          nbqa flake8 colab/ \
+            --max-line-length=120 \
+            --extend-ignore=E303,E402,E501,F821,W503 \
+            --exclude="**/.ipynb_checkpoints/*"
