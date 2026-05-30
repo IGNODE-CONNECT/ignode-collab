@@ -1,0 +1,23 @@
+# Lock line endings to LF for everything text. Defensive — protects against
+# Windows contributors whose autocrlf=true rewrites tracked text files. CRLF
+# in CI YAML / shell scripts / notebooks has bitten teams before.
+
+* text=auto eol=lf
+
+# Notebooks are JSON under the hood — never normalize beyond LF
+*.ipynb text eol=lf
+
+# Linux line endings explicitly for files CI / Colab will execute
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+
+# Binary types that should not be touched
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.onnx binary
+*.tflite binary
+*.tar binary
