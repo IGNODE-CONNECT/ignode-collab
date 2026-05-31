@@ -2,52 +2,33 @@
 
 Local utilities for IGNODE platform testing — NOT customer-facing.
 
-## generate_test_models.py
+## Generate test model artifacts
+
+> [**Open generate_test_models.ipynb in Colab**](https://colab.research.google.com/github/IGNODE-CONNECT/ignode-collab/blob/main/colab/generate_test_models.ipynb)
 
 Builds tiny test artifacts in every model format the Custom Model Upload
-wizard accepts, so you can exercise the full pipeline (upload → deploy →
-predict) without bringing your own model.
+wizard accepts so you can exercise the full pipeline (upload → deploy →
+predict) without bringing your own model. Each cell downloads one ZIP
+to your browser — drag into IGNODE → Custom Model Upload to test.
 
-### Run
-
-```bash
-python scripts/generate_test_models.py
-```
-
-Output lands in `scripts/test-artifacts/<format>-<task>/`. Each subfolder
-contains:
-
-- The model file (`model.onnx` / `model.txt` / `model.json` / `model.tflite`)
-- Matching sidecars (`class_labels.json`, `feature_columns.json`,
-  `preprocess_config.json` as appropriate)
-- A ready-to-upload `model-artifacts.zip` bundle
+The notebook is the canonical path. Colab has torch, tensorflow,
+scikit-learn etc. pre-installed (or one-line installs); local Python on
+Windows wrestles with native deps for hours.
 
 ### Coverage
 
-| Format      | Classification | Regression | Image classification |
-|-------------|----------------|------------|----------------------|
-| `lgbm_text` | iris           | diabetes   | — (not supported)    |
-| `xgb_json`  | iris           | diabetes   | — (not supported)    |
-| `onnx`      | iris (sklearn) | diabetes (sklearn) | tiny MobileNetV2 |
-| `tflite`    | — (not supported) | — (not supported) | tiny CNN |
+| Format      | Classification     | Regression          | Image classification     |
+|-------------|--------------------|---------------------|--------------------------|
+| `lgbm_text` | iris               | diabetes            | — (not supported)        |
+| `xgb_json`  | iris               | diabetes            | — (not supported)        |
+| `onnx`      | iris (sklearn)     | diabetes (sklearn)  | random-weight MobileNetV2 |
+| `tflite`    | — (not supported)  | — (not supported)   | tiny CNN                 |
 
-Models are random-weights tiny — they're for testing format handling, not
-accuracy. Predict responses will not be meaningful, only well-formed.
+Models are random or minimally-trained — the goal is exercising format
+handling, not accuracy. Predictions will be well-formed but not
+meaningful.
 
-### Selective generation
+### generate_test_models.py
 
-```bash
-python scripts/generate_test_models.py --only lgbm-cls xgb-cls
-```
-
-Available keys: `lgbm-cls`, `lgbm-reg`, `xgb-cls`, `xgb-reg`,
-`onnx-cls`, `onnx-reg`, `onnx-img`, `tflite-img`.
-
-### Dependencies
-
-The script skips any artifact whose Python deps aren't installed (with a
-warning). Install whatever set you need:
-
-- Tabular: `pip install lightgbm xgboost scikit-learn skl2onnx onnx`
-- ONNX image: `pip install torch torchvision onnx`
-- TFLite image: `pip install tensorflow`
+Stub that just prints the notebook URL. There is no local-Python
+equivalent — open the notebook.
