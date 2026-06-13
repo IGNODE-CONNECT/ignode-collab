@@ -23,7 +23,6 @@ The maintained training notebooks. All of them:
 | Anything else (default) | **YOLOX** — matches IGNODE's production trainer byte-for-byte |
 | Dense (more than 20 objects per image), small overlapping targets (cells under a microscope, tiny defects) AND you have at least 500 images per class | **RF-DETR** |
 | You want a quick smoke run on a small dataset | **YOLOX** with `--epochs 30` |
-| Customer already trained an Ultralytics YOLOv5/v8 model and wants to migrate to YOLOX | **YOLOX** (the notebook walks the migration end-to-end) |
 
 Both detection notebooks emit the same upload-bundle layout — switching between them later is a fresh-train job, not a sidecar swap.
 
