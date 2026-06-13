@@ -1,6 +1,6 @@
 # Colab Notebooks
 
-The four maintained training notebooks. All four:
+The maintained training notebooks. All of them:
 
 - Run on Google Colab's free tier (T4 GPU for image notebooks, CPU for tabular)
 - Use pinned dependency versions so the notebook still works in 6 months
@@ -11,9 +11,22 @@ The four maintained training notebooks. All four:
 | Notebook | Task | Target runtime |
 |---|---|---|
 | `train_image_classifier.ipynb` | Image classification (cat/dog, defect/no-defect, etc.) | 5-10 min on T4 |
-| `train_image_detector.ipynb` | Image detection (bounding boxes around objects) | 30-60 min on T4 |
+| `train_image_detector_yolox_migration.ipynb` | **Image detection — default.** YOLOX, same recipe as IGNODE's production trainer | 30-60 min on T4 |
+| `train_image_detector_rfdetr.ipynb` | Image detection — RF-DETR (transformer / DETR family) for dense + tiny objects | 60-120 min on T4 |
+| `train_image_detector.ipynb` | Image detection — older legacy notebook; prefer the two above for new projects | 30-60 min on T4 |
 | `train_tabular_classifier.ipynb` | Tabular classification (Yes/No, Normal/Warning/Critical) | < 1 min on CPU |
 | `train_tabular_regression.ipynb` | Tabular regression (price, remaining life, temperature) | < 1 min on CPU |
+
+## Which detection notebook do I pick?
+
+| If your scene is… | Pick |
+|---|---|
+| Anything else (default) | **YOLOX migration** — matches IGNODE's production trainer byte-for-byte |
+| Dense (>20 objects per image), small overlapping targets (cells under a microscope, tiny defects) AND you have ≥500 images per class | **RF-DETR** |
+| You want a quick smoke run on a small dataset | **YOLOX migration** with `--epochs 30` |
+| Customer already trained an Ultralytics YOLOv5/v8 model and wants to migrate to YOLOX | **YOLOX migration** (it's named after this use case) |
+
+Both detection notebooks emit the same upload-bundle layout — switching between them later is a fresh-train job, not a sidecar swap.
 
 ## Dataset format expected by each notebook
 
