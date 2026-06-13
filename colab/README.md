@@ -46,6 +46,27 @@ Each notebook downloads two things at the end:
    - **Target / label column name** (Tabular)
    - **Image preprocessing config** (Image notebooks) — input size, channel order, mean/std
 
+## Class-labels contract — non-negotiable for ALL detection / classification notebooks (IR-3.S.A)
+
+**Never hand-type `CLASS_LABELS = [...]` with stub names** ("class_0", "class_1") and expect the customer to fill them in. Half the time they paste the names in the wrong order and ship a model where every prediction is mislabeled. The format-converter's IR-3.GG.H bug taught us this is the single most expensive class of failure to debug after deploy.
+
+Every notebook that produces a `class_labels.json` sidecar MUST:
+
+1. **Auto-derive `CLASS_LABELS` from the dataset.** Read whatever source-of-truth the training framework used:
+   - **COCO datasets** → `_annotations.coco.json` → sort `categories` by `id` → take `name` field
+   - **YOLO datasets** → `data.yaml` → `names` field (preserve order)
+   - **VOC datasets** → use `supervision.DetectionDataset.from_pascal_voc(...).classes` (insertion order; do NOT `sorted(seen)`)
+   - **Train-script artefacts** → look for `classes.txt` the training script wrote out
+   - **Framework-internal** → read `model.classes` / `model.dataset.classes` if the framework exposes it
+2. **Print the derived list before bundling** — show the index→name map plainly so the customer notices a surprising order before downloading.
+3. **Add an ONNX smoke-test cell after export** that:
+   - Loads the freshly-exported `model.onnx` with `onnxruntime`
+   - Runs ONE validation image (mirror exactly the preprocess in `preprocess_config.json`)
+   - Decodes the highest-confidence detection
+   - Prints `top class_id → class_labels[that id]` so the customer can eyeball whether the model labels look sane
+
+The two reference implementations are `train_image_detector_rfdetr.ipynb` (COCO source → auto-derive + DETR-shape smoke-test) and `train_image_detector_yolox_migration.ipynb` (classes.txt source → auto-derive + YOLOX-raw smoke-test). Both ship the cells under an `IR-3.S.A` comment marker so future audits can grep for the pattern.
+
 ## How the notebooks stay reliable
 
 - Every cell that installs a dependency pins the exact version
