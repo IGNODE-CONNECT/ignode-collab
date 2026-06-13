@@ -8,7 +8,7 @@ Pre-packaged datasets that the customer Colab notebooks pull via `DATASET_URL` f
 |---|---|---|---|---|
 | `bccd.coco.zip` | COCO (Roboflow export) | All three detection notebooks | 7.4 MB | 3 (Platelets, RBC, WBC) |
 | `bccd.voc.zip` | Pascal VOC (Roboflow export) | `train_image_detector_yolox.ipynb` · `train_image_detector_rfdetr.ipynb` (auto-converts via supervision) | 7.5 MB | 3 (Platelets, RBC, WBC) |
-| `bccd.yolov8.zip` | YOLOv8 (Roboflow export) | `train_image_detector_yolox.ipynb` · `train_image_detector_rfdetr.ipynb` · `train_image_detector_ultralytics.ipynb` (auto-converts) | 7.4 MB | 3 (Platelets, RBC, WBC) |
+| `bccd.yolov8.zip` | YOLOv8 (Roboflow export) | `train_image_detector_yolox.ipynb` · `train_image_detector_rfdetr.ipynb` (auto-converts) | 7.4 MB | 3 (Platelets, RBC, WBC) |
 
 ## How to use
 
@@ -46,7 +46,6 @@ Then **Runtime → Run all**. The notebook will:
 |---|---|---|
 | `train_image_detector_yolox.ipynb` | YOLOX VOC layout | VOC, COCO, YOLO, and Roboflow variants of each. Delegated to `train_any.py` (downloaded from the production trainer benchmark). |
 | `train_image_detector_rfdetr.ipynb` | COCO | VOC + YOLO converted to COCO via `sv.DetectionDataset.from_pascal_voc / from_yolo` + `.as_coco()`. |
-| `train_image_detector_ultralytics.ipynb` | Ultralytics YOLO | COCO + YOLO. VOC support not yet wired (open follow-up). |
 
 All three preserve class label order from supervision's `.classes` attribute verbatim. The sidecar `class_labels.json` is derived from that single source after conversion — never re-sorted, never re-derived in parallel.
 
