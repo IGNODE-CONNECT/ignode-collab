@@ -11,9 +11,8 @@ The maintained training notebooks. All of them:
 | Notebook | Task | Target runtime |
 |---|---|---|
 | `train_image_classifier.ipynb` | Image classification (cat/dog, defect/no-defect, etc.) | 5-10 min on T4 |
-| `train_image_detector_yolox_migration.ipynb` | **Image detection — default.** YOLOX, same recipe as IGNODE's production trainer | 30-60 min on T4 |
+| `train_image_detector_yolox.ipynb` | **Image detection — default.** YOLOX, same recipe as IGNODE's production trainer | 30-60 min on T4 |
 | `train_image_detector_rfdetr.ipynb` | Image detection — RF-DETR (transformer / DETR family) for dense + tiny objects | 60-120 min on T4 |
-| `train_image_detector.ipynb` | Image detection — older legacy notebook; prefer the two above for new projects | 30-60 min on T4 |
 | `train_tabular_classifier.ipynb` | Tabular classification (Yes/No, Normal/Warning/Critical) | < 1 min on CPU |
 | `train_tabular_regression.ipynb` | Tabular regression (price, remaining life, temperature) | < 1 min on CPU |
 
@@ -21,10 +20,10 @@ The maintained training notebooks. All of them:
 
 | If your scene is… | Pick |
 |---|---|
-| Anything else (default) | **YOLOX migration** — matches IGNODE's production trainer byte-for-byte |
-| Dense (>20 objects per image), small overlapping targets (cells under a microscope, tiny defects) AND you have ≥500 images per class | **RF-DETR** |
-| You want a quick smoke run on a small dataset | **YOLOX migration** with `--epochs 30` |
-| Customer already trained an Ultralytics YOLOv5/v8 model and wants to migrate to YOLOX | **YOLOX migration** (it's named after this use case) |
+| Anything else (default) | **YOLOX** — matches IGNODE's production trainer byte-for-byte |
+| Dense (more than 20 objects per image), small overlapping targets (cells under a microscope, tiny defects) AND you have at least 500 images per class | **RF-DETR** |
+| You want a quick smoke run on a small dataset | **YOLOX** with `--epochs 30` |
+| Customer already trained an Ultralytics YOLOv5/v8 model and wants to migrate to YOLOX | **YOLOX** (the notebook walks the migration end-to-end) |
 
 Both detection notebooks emit the same upload-bundle layout — switching between them later is a fresh-train job, not a sidecar swap.
 
@@ -78,7 +77,22 @@ Every notebook that produces a `class_labels.json` sidecar MUST:
    - Decodes the highest-confidence detection
    - Prints `top class_id → class_labels[that id]` so the customer can eyeball whether the model labels look sane
 
-The two reference implementations are `train_image_detector_rfdetr.ipynb` (COCO source → auto-derive + DETR-shape smoke-test) and `train_image_detector_yolox_migration.ipynb` (classes.txt source → auto-derive + YOLOX-raw smoke-test). Both ship the cells under an `IR-3.S.A` comment marker so future audits can grep for the pattern.
+The two reference implementations are `train_image_detector_rfdetr.ipynb` (COCO source → auto-derive + DETR-shape smoke-test) and `train_image_detector_yolox.ipynb` (classes.txt source → auto-derive + YOLOX-raw smoke-test). Both ship the cells under an `IR-3.S.A` comment marker so future audits can grep for the pattern.
+
+## Dataset-source contract — also non-negotiable (IR-3.S.B)
+
+Every image notebook (classification + detection) MUST expose the dataset source via a top-of-notebook **Settings cell** with two variables:
+
+- `DATASET_URL` — public download URL (Roboflow Universe "Raw URL", any HTTPS .zip / .tar)
+- `DATASET_DIR` — folder path (typically inside a mounted Google Drive)
+
+`DATASET_URL` takes precedence when set. The cell immediately after Settings:
+
+1. **Raises a loud `SystemExit` warning if BOTH are empty** — saves the customer a 30-minute training run on an empty folder.
+2. Downloads + extracts the URL when provided, then auto-points `DATASET_DIR` at the extracted path.
+3. Falls back to the local/Drive folder otherwise, verifying the path exists.
+
+The Drive-mount call is now its own **OPTIONAL** cell between Settings and Load — customers using `DATASET_URL` skip it. Look for `# IR-3.S.B` marker in patched cells.
 
 ## How the notebooks stay reliable
 
