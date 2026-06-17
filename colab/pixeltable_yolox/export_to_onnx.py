@@ -102,6 +102,12 @@ def main() -> int:
         model.head.decode_in_inference = False
 
     # Export.
+    #
+    # `dynamo=False` pins us to the legacy TorchScript-based exporter.
+    # torch 2.6+ flipped the default to the new `dynamo` exporter which
+    # requires `onnxscript` as a dep we don't install (and would change
+    # the produced ONNX graph shape — we want byte-stable output vs
+    # the smoke harness validation that ran on torch 2.5.x).
     dummy = torch.randn(1, 3, args.input_size, args.input_size)
     torch.onnx.export(
         model, dummy, args.out,
@@ -112,6 +118,7 @@ def main() -> int:
             "images": {0: "batch"},
             "output": {0: "batch"},
         },
+        dynamo=False,
     )
 
     # Verify the file landed + report shape.
