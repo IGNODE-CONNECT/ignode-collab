@@ -342,26 +342,45 @@ def patch_yolox_files(classes: tuple, num_classes: int, epochs: int,
         if cache.is_dir():
             shutil.rmtree(cache)
 
-    # Patch the exp config — num_classes / max_epoch / no_aug_epochs
+    # Patch the exp config.
+    #
+    # YOLOX 0.3.0's `yolox_voc_s.py` only sets `self.num_classes` directly —
+    # `max_epoch` and `no_aug_epochs` are INHERITED from the base `Exp`
+    # class (max_epoch=300, no_aug_epochs=15) and never re-stated. A
+    # plain `re.sub(r"self\.max_epoch\s*=\s*\d+", ...)` matched nothing
+    # and silently no-op'd, so `--epochs 10` got accepted on the CLI
+    # but the trainer still ran 300 epochs. Symptom: customer sets
+    # EPOCHS=10 in the Colab Settings cell, training shows ETA ~3 hours
+    # with `max_epoch │ 300` in the YOLOX trainer banner.
+    #
+    # Fix: inject max_epoch + no_aug_epochs via the same after-
+    # super().__init__() block used for depth/width/seed below.
+    # super(Exp, self).__init__() IS in yolox_voc_s.py (guaranteed), so
+    # the injection always lands.
     exp_file = Path("/app/YOLOX/exps/example/yolox_voc/yolox_voc_s.py")
     exp = exp_file.read_text()
     exp = re.sub(r"self\.num_classes\s*=\s*\d+", f"self.num_classes = {num_classes}", exp)
-    exp = re.sub(r"self\.max_epoch\s*=\s*\d+", f"self.max_epoch = {epochs}", exp)
-    exp = re.sub(r"self\.no_aug_epochs\s*=\s*\d+",
-                 f"self.no_aug_epochs = {no_aug_epochs}", exp)
 
-    # v8: inject backbone-specific depth + width if not yolox_s
+    # v8: inject backbone-specific depth + width if not yolox_s.
     depth, width = BACKBONE_CONFIG.get(backbone, BACKBONE_CONFIG["yolox_s"])
-    # Remove any prior self.depth / self.width / self.seed lines we may have injected
+    # Remove any prior injected lines (re-run safe).
     exp = re.sub(r"\n\s*self\.depth\s*=\s*[0-9.]+", "", exp)
     exp = re.sub(r"\n\s*self\.width\s*=\s*[0-9.]+", "", exp)
     exp = re.sub(r"\n\s*self\.seed\s*=\s*\S+", "", exp)
-    # v9: also inject seed via exp config (Megvii tools/train.py has no --seed flag)
+    exp = re.sub(r"\n\s*self\.max_epoch\s*=\s*\d+", "", exp)
+    exp = re.sub(r"\n\s*self\.no_aug_epochs\s*=\s*\d+", "", exp)
+    # v9: seed via exp config (Megvii tools/train.py has no --seed flag).
     seed_line = f"\n        self.seed = {seed}" if seed is not None else ""
-    # Insert after super().__init__() — guaranteed present in Megvii's voc_s exp
     exp = exp.replace(
         "super(Exp, self).__init__()",
-        f"super(Exp, self).__init__()\n        self.depth = {depth}\n        self.width = {width}{seed_line}",
+        (
+            f"super(Exp, self).__init__()"
+            f"\n        self.depth = {depth}"
+            f"\n        self.width = {width}"
+            f"\n        self.max_epoch = {epochs}"
+            f"\n        self.no_aug_epochs = {no_aug_epochs}"
+            f"{seed_line}"
+        ),
         1,
     )
     exp_file.write_text(exp)
