@@ -103,11 +103,21 @@ def main() -> int:
 
     # Export.
     #
-    # `dynamo=False` pins us to the legacy TorchScript-based exporter.
-    # torch 2.6+ flipped the default to the new `dynamo` exporter which
-    # requires `onnxscript` as a dep we don't install (and would change
-    # the produced ONNX graph shape — we want byte-stable output vs
-    # the smoke harness validation that ran on torch 2.5.x).
+    # torch.onnx.export's exporter backend depends on torch version:
+    #   - torch 2.4 and earlier  → legacy TorchScript only (no `dynamo` kwarg)
+    #   - torch 2.5             → `dynamo` kwarg introduced, defaults to False
+    #   - torch 2.6+            → `dynamo` default flipped to True (needs
+    #                              onnxscript which we don't install AND
+    #                              produces a structurally-different ONNX
+    #                              graph than the smoke harness validated)
+    #
+    # Inspect the signature and pass `dynamo=False` only when supported.
+    # On torch <2.5 the default is already legacy so no override needed.
+    import inspect
+    _export_kwargs = {}
+    if "dynamo" in inspect.signature(torch.onnx.export).parameters:
+        _export_kwargs["dynamo"] = False
+
     dummy = torch.randn(1, 3, args.input_size, args.input_size)
     torch.onnx.export(
         model, dummy, args.out,
@@ -118,7 +128,7 @@ def main() -> int:
             "images": {0: "batch"},
             "output": {0: "batch"},
         },
-        dynamo=False,
+        **_export_kwargs,
     )
 
     # Verify the file landed + report shape.
