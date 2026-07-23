@@ -1,0 +1,32 @@
+{
+  "input_size": [
+    640,
+    640
+  ],
+  "mean": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "std": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "channel_order": "BGR",
+  "image_format": "CHW",
+  "rescale": "none",
+  "resize_method": "letterbox",
+  "letterbox_color": [
+    114,
+    114,
+    114
+  ],
+  "postprocess": {
+    "family": "yolox_raw",
+    "nms_required": true,
+    "confidence_threshold": 0.25,
+    "nms_iou_threshold": 0.65
+  },
+  "_backbone": "yolox_s"
+}

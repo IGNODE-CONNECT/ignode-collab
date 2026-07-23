@@ -1,1 +1,3 @@
 test-artifacts/
+# Model binaries produced by the test scripts stay out of git (reference models are versioned under examples/models/).
+*.onnx

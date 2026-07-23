@@ -1,6 +1,5 @@
-# Notebook runtime outputs
+# Notebook runtime outputs (onnx is scoped to scripts/ below — reference models are versioned under examples/models/)
 .ipynb_checkpoints/
-*.onnx
 *.tar
 *.tflite
 
